@@ -25,7 +25,12 @@ def dont_have_pass():
 
 # ---------------------------------------------------------
 
-sl_dns_entries = {}
+try:
+	with open(SLDNS_JSON_FILE, 'r') as f:
+		sl_dns_entries = json.load(f)
+except:
+	print("Couldn't load SL DNS entries")
+	sl_dns_entries = {}
 
 # ---------------------------------------------------------
 
@@ -51,7 +56,8 @@ async def get_dns(request):
 	id = request.match_info['id']
 	if id not in sl_dns_entries:
 		return web.Response(status=404, text="Not found")
-	return web.json_response({"url": sl_dns_entries[id]})
+	entry = sl_dns_entries[id]
+	return web.json_response({"url": entry["url"], "last_updated_at": entry["last_updated_at"], "age": int(time.time() - entry["last_updated_at"])})
 
 @routes.put('/v1/sldns/{id}')
 async def put_dns(request):
@@ -60,7 +66,7 @@ async def put_dns(request):
 	if not request.can_read_body:
 		return web.Response(status=400, text="No body provided")
 	id = request.match_info['id']
-	sl_dns_entries[id] = await request.text()
+	sl_dns_entries[id] = {"url": await request.text(), "last_updated_at": int(time.time())}
 	return web.Response(status=200, text="OK!")
 
 @routes.delete('/v1/sldns/{id}')
@@ -96,7 +102,8 @@ def main():
 	except KeyboardInterrupt:
 		print("Shutting the service down...")
 	finally:
-		pass
+		with open(SLDNS_JSON_FILE, 'w') as f:
+			json.dump(sl_dns_entries, f)
 
 if __name__ == "__main__":
 	main()

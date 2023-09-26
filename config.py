@@ -1,3 +1,4 @@
 SECRET_USER = ""
 SECRET_PASS = ""
 SERVICE_PORT = 1234
+SLDNS_JSON_FILE = "sldns.json"
