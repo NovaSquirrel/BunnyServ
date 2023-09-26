@@ -75,6 +75,33 @@ async def del_dns(request):
 
 # ---------------------------------------------------------
 
+def main():
+	global loop
+
+	# Start the event loop
+	loop = asyncio.new_event_loop()
+	asyncio.set_event_loop(loop)
+	app = web.Application()
+	app.add_routes(routes)
+
+	runner = web.AppRunner(app)
+	loop.run_until_complete(runner.setup())
+	site = web.TCPSite(runner, port=SERVICE_PORT)
+	loop.run_until_complete(site.start())
+
+	print("Service started!")
+
+	try:
+		loop.run_forever()
+	except KeyboardInterrupt:
+		print("Shutting the service down...")
+	finally:
+		pass
+
+if __name__ == "__main__":
+	main()
+
+"""
 async def main():
 	async with asyncio.TaskGroup() as tg:
 		app = web.Application()
@@ -97,3 +124,4 @@ if __name__ == "__main__":
 		print("Shutting the service down...")
 	finally:
 		pass
+"""
