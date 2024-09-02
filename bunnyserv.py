@@ -8,7 +8,7 @@
 # provided the copyright notice and this notice are preserved.
 # This file is offered as-is, without any warranty.
 #
-import asyncio, time, websockets, json, base64
+import asyncio, aiohttp, time, websockets, json, base64
 from aiohttp import web
 from config import *
 
@@ -78,6 +78,24 @@ async def del_dns(request):
 		return web.Response(status=404, text="Not found")
 	del sl_dns_entries[id]
 	return web.Response(status=200, text="Deleted")
+
+@routes.get('/v1/tt_users_online')
+async def get_time(request):
+	async with aiohttp.ClientSession() as session:
+		async with session.get(TOWN_INFO_API) as response:
+			if response.status != 200:
+				return web.Response(text="")
+			body = await response.text()
+			j = json.loads(body)
+			user_count = j['stats']['user_count']
+			users = []
+			for i, user in j['users'].items():
+				if user.get('bot', False):
+					continue
+				if not len(user['name']):
+					continue
+				users.append(user['name'] + ((' (%s)' % user['username']) if user['username'] else ''))
+	return web.Response(text="%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users)))
 
 # ---------------------------------------------------------
 
