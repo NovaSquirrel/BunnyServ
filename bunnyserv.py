@@ -95,7 +95,10 @@ async def get_time(request):
 				if not len(user['name']):
 					continue
 				users.append(user['name'] + ((' (%s)' % user['username']) if user['username'] else ''))
-	return web.Response(text="%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users)))
+	if len(users):
+		return web.Response(text="%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users)))
+	else:
+		return web.Response(text="No one is currently online, but you can still have a look around!")
 
 # ---------------------------------------------------------
 
