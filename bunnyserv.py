@@ -22,6 +22,8 @@ def has_pass(request):
 	return request.headers.get("Authorization", None) == authorization_header_value
 def dont_have_pass():
 	return web.Response(status=401, text="🔨🐇")
+def escape_tags(text):
+	return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 # ---------------------------------------------------------
 
@@ -80,7 +82,7 @@ async def del_dns(request):
 	return web.Response(status=200, text="Deleted")
 
 @routes.get('/v1/tt_users_online')
-async def get_time(request):
+async def tilemap_town_users(request):
 	async with aiohttp.ClientSession() as session:
 		async with session.get(TOWN_INFO_API) as response:
 			if response.status != 200:
@@ -96,7 +98,7 @@ async def get_time(request):
 					continue
 				users.append(user['name'] + ((' (%s)' % user['username']) if user['username'] else ''))
 	if len(users):
-		return web.Response(text="%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users)))
+		return web.Response(text=escape_tags("%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users))))
 	else:
 		return web.Response(text="No one is currently online, but you can still have a look around!")
 
