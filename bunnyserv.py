@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 #
 # BunnyServ
-# Copyright 2023 NovaSquirrel
+# Copyright 2023-2025 NovaSquirrel
 #
 # Copying and distribution of this file, with or without
 # modification, are permitted in any medium without royalty
 # provided the copyright notice and this notice are preserved.
 # This file is offered as-is, without any warranty.
 #
-import asyncio, aiohttp, time, websockets, json, base64
+import asyncio, aiohttp, time, websockets, json, base64, hashlib, io
 from aiohttp import web
 from config import *
-
-start_time = int(time.time())
+from PIL import Image
+from unicornify.unicornavatar import create_avatar
 
 authorization_header_value = "Basic "+base64.b64encode((SECRET_USER + ":" + SECRET_PASS).encode()).decode()
 
@@ -101,6 +101,24 @@ async def tilemap_town_users(request):
 		return web.Response(text=escape_tags("%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users))))
 	else:
 		return web.Response(text="No one is currently online, but you can still have a look around!")
+
+@routes.get('/v1/unicornify/{name}')
+async def unicornify(request):
+	name = request.match_info['name']
+	hashed = hashlib.md5(name.encode('utf-8')).hexdigest()
+
+	as_file = io.BytesIO()
+	as_file.write(create_avatar(256, int(hashed, 16)))
+	as_file.seek(0)
+	reread = Image.open(as_file)
+	reread.load()
+	as_file.close()
+
+	as_png = io.BytesIO()
+	reread.save(as_png, format='PNG')
+	as_png.seek(0)
+
+	return web.Response(status=200, body=as_png.read(), content_type="image/png", headers={"Source-Code": "https://github.com/NovaSquirrel/Unicornify/", "Cache-Control": "public, max-age=604800, immutable"})
 
 # ---------------------------------------------------------
 
