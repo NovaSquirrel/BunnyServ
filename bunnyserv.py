@@ -108,7 +108,7 @@ async def unicornify(request):
 	hashed = hashlib.md5(name.encode('utf-8')).hexdigest()
 
 	as_file = io.BytesIO()
-	as_file.write(create_avatar(256, int(hashed, 16)))
+	as_file.write(create_avatar(128, int(hashed, 16)))
 	as_file.seek(0)
 	reread = Image.open(as_file)
 	reread.load()
