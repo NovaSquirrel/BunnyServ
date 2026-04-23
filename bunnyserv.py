@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # BunnyServ
-# Copyright 2023-2025 NovaSquirrel
+# Copyright 2023-2026 NovaSquirrel
 #
 # Copying and distribution of this file, with or without
 # modification, are permitted in any medium without royalty
@@ -81,6 +81,26 @@ async def del_dns(request):
 	del sl_dns_entries[id]
 	return web.Response(status=200, text="Deleted")
 
+status_emojis = {
+	"idle": "&x1F4A4;",
+    "away": "&#x1F343;",
+    "busy": "&#x1F697;",
+    "rp":   "&#x1F3AD;",
+    "lfrp": "&#x1F3AD;",
+    "chat": "&#x1F4AC;",
+    "ooc":  "&#x1F9CD;",
+    "dnd":  "&#x26D4;",
+}
+status_text = {
+	"idle": "Idle",
+    "away": "Away",
+    "busy": "Busy",
+    "rp":   "Roleplaying",
+    "lfrp": "Looking to roleplay",
+    "chat": "Looking to chat",
+    "ooc":  "Out-of-character",
+    "dnd":  "Do-not-disturb",
+}
 @routes.get('/v1/tt_users_online')
 async def tilemap_town_users(request):
 	async with aiohttp.ClientSession() as session:
@@ -96,9 +116,13 @@ async def tilemap_town_users(request):
 					continue
 				if not len(user['name']):
 					continue
-				users.append(user['name'] + ((' (%s)' % user['username']) if user['username'] else ''))
+				status = user.get('status')
+				user_text = escape_tags(user['name']) + (escape_tags(' (%s)' % user['username']) if user['username'] else '')
+				if status in status_emojis:
+					user_text += "<span title=\"%s\">%s</span>" % (status_text[status], status_emojis[status])
+				users.append(user_text)
 	if len(users):
-		return web.Response(text=escape_tags("%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users))))
+		return web.Response(text="%d user%s online: %s" % (user_count, 's' if user_count != 1 else '', ', '.join(users)))
 	else:
 		return web.Response(text="No one is currently online, but you can still have a look around!")
 
