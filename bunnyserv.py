@@ -98,8 +98,8 @@ status_text = {
     "rp":   "Roleplaying",
     "lfrp": "Looking to roleplay",
     "chat": "Looking to chat",
-    "ooc":  "Out-of-character",
-    "dnd":  "Do-not-disturb",
+    "ooc":  "Out of character",
+    "dnd":  "Do not disturb",
 }
 @routes.get('/v1/tt_users_online')
 async def tilemap_town_users(request):
