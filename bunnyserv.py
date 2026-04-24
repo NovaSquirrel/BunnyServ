@@ -82,7 +82,7 @@ async def del_dns(request):
 	return web.Response(status=200, text="Deleted")
 
 status_emojis = {
-	"idle": "&x1F4A4;",
+	"idle": "&#x1F4A4;",
     "away": "&#x1F343;",
     "busy": "&#x1F697;",
     "rp":   "&#x1F3AD;",
