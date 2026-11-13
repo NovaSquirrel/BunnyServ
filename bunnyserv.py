@@ -147,7 +147,7 @@ async def unicornify(request):
 colors_for_palette = {}
 @routes.get('/v1/tt_lospec_palette/{name}')
 async def tilemap_town_lospec_palette_convert(request):
-	name = request.match_info['name'].lower()
+	name = request.match_info['name'].lower().removesuffix(".png")
 	if not name or len(name) > 50 or not name.isascii() or any((not _.isalnum() and _ != '-') for _ in name):
 		return web.Response(status=404)
 	if name not in colors_for_palette:
