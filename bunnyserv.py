@@ -11,7 +11,7 @@
 import asyncio, aiohttp, time, websockets, json, base64, hashlib, io
 from aiohttp import web
 from config import *
-from PIL import Image
+from PIL import Image, ImageDraw
 from unicornify.unicornavatar import create_avatar
 
 authorization_header_value = "Basic "+base64.b64encode((SECRET_USER + ":" + SECRET_PASS).encode()).decode()
@@ -143,6 +143,39 @@ async def unicornify(request):
 	as_png.seek(0)
 
 	return web.Response(status=200, body=as_png.read(), content_type="image/png", headers={"Source-Code": "https://github.com/NovaSquirrel/Unicornify/", "Cache-Control": "public, max-age=604800, immutable"})
+
+colors_for_palette = {}
+@routes.get('/v1/tt_lospec_palette/{name}')
+async def tilemap_town_lospec_palette_convert(request):
+	name = request.match_info['name'].lower()
+	if not name or len(name) > 50 or not name.isascii() or any((not _.isalnum() and _ != '-') for _ in name):
+		return web.Response(status=404)
+	if name not in colors_for_palette:
+		async with aiohttp.ClientSession() as session:
+			async with session.get(f"https://lospec.com/palette-list/{name}.json") as response:
+				if response.status != 200:
+					return web.Response(status=404)
+				body = await response.text()
+				colors_for_palette[name] = json.loads(body)["colors"]
+	colors = colors_for_palette[name]
+	color_count = len(colors)
+	colors_as_tuples = [(int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16), 255) for color in colors]
+
+	if color_count > 64:
+		return web.Response(status=400)
+	image = Image.new('RGBA', (min(64, color_count+1)*2, min(64, color_count+1)), None)
+	draw = ImageDraw.Draw(image)
+	for i, color in enumerate(colors_as_tuples):
+		draw.line((0, i, image.size[0], i), fill=color)
+	for i, color in enumerate(colors_as_tuples):
+		draw.line((i*2, 0, i*2, image.size[1]), fill=color)
+	if color_count < 64:
+		draw.line((color_count*2, 0, color_count*2, image.size[1]), fill=(0,0,0,0))
+
+	as_png = io.BytesIO()
+	image.convert("P").save(as_png, format='PNG')
+	as_png.seek(0)
+	return web.Response(status=200, body=as_png.read(), content_type="image/png", headers={"Cache-Control": "public, max-age=604800, immutable"})
 
 # ---------------------------------------------------------
 
