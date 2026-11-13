@@ -145,15 +145,17 @@ async def unicornify(request):
 	return web.Response(status=200, body=as_png.read(), content_type="image/png", headers={"Source-Code": "https://github.com/NovaSquirrel/Unicornify/", "Cache-Control": "public, max-age=604800, immutable"})
 
 colors_for_palette = {}
+bad_palettes = set()
 @routes.get('/v1/tt_lospec_palette/{name}')
 async def tilemap_town_lospec_palette_convert(request):
 	name = request.match_info['name'].lower().removesuffix(".png")
-	if not name or len(name) > 50 or not name.isascii() or any((not _.isalnum() and _ != '-') for _ in name):
+	if not name or len(name) > 50 or not name.isascii() or any((not _.isalnum() and _ != '-') for _ in name) or name in bad_palettes:
 		return web.Response(status=404)
 	if name not in colors_for_palette:
 		async with aiohttp.ClientSession() as session:
 			async with session.get(f"https://lospec.com/palette-list/{name}.json") as response:
 				if response.status != 200:
+					bad_palettes.add(name)
 					return web.Response(status=404)
 				body = await response.text()
 				colors_for_palette[name] = json.loads(body)["colors"]
